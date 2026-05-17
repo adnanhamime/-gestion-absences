@@ -3,7 +3,7 @@ import "./style.css";
 let pendingAbsenceEntries = [];
 let currentPage = "dashboard";
 
-const API = "http://127.0.0.1:8000/api";
+const API = "https://gestion-absences-production.up.railway.app/api";
 
 /* =========================
    TOKEN HELPERS
