@@ -16,17 +16,14 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             return response()->json([
                 'message' => 'Identifiants incorrects'
             ], 401);
         }
 
-        // Supprime les anciens tokens (optionnel)
+        $user = Auth::user();
         $user->tokens()->delete();
-
         $token = $user->createToken('admin-token')->plainTextToken;
 
         return response()->json([
@@ -42,7 +39,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-
         return response()->json(['message' => 'Déconnecté']);
     }
 
