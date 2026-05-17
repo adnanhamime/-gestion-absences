@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -16,13 +17,28 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            return response()->json([
-                'message' => 'Identifiants incorrects'
-            ], 401);
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
 
-        $user = Auth::user();
+        // Try multiple hash algorithms
+        $password = $request->password;
+        $valid = false;
+
+        if (Hash::check($password, $user->password)) {
+            $valid = true;
+        } elseif (password_verify($password, $user->password)) {
+            $valid = true;
+        } elseif (Auth::attempt(['email' => $request->email, 'password' => $password])) {
+            $valid = true;
+        }
+
+        if (!$valid) {
+            return response()->json(['message' => 'Identifiants incorrects'], 401);
+        }
+
         $user->tokens()->delete();
         $token = $user->createToken('admin-token')->plainTextToken;
 
